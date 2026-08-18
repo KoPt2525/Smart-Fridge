@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
 	"net/http"
 
 	_ "github.com/lib/pq"
@@ -15,19 +14,7 @@ func main() {
 	}
 	defer db.Close()
 
-	off, err := GetProductByBarcode("4610003254766")
-	if err != nil {
-		panic(err)
-	}
-
-	p := mapToProduct(off, "4610003254766")
-
-	id, err := InsertProduct(db, p)
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Printf("вставлено с id=%d, продукт: %+v\n", id, p)
-	http.HandleFunc("/products", addProductHandler)
+	app := &App{db: db}
+	http.HandleFunc("/products", app.addProductHandler)
 	http.ListenAndServe("localhost:8080", nil)
 }
