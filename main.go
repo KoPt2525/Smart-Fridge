@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"net/http"
 
 	_ "github.com/lib/pq"
 )
@@ -27,4 +28,6 @@ func main() {
 	}
 
 	fmt.Printf("вставлено с id=%d, продукт: %+v\n", id, p)
+	http.HandleFunc("/products", addProductHandler)
+	http.ListenAndServe("localhost:8080", nil)
 }
