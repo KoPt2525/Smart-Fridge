@@ -19,5 +19,6 @@ func main() {
 	http.HandleFunc("/products", app.addProductHandler)
 	http.HandleFunc("/products/list", app.getProductsHandler)
 	http.HandleFunc("/stock", app.addStockHandler)
+	http.HandleFunc("/stock/list", app.getStockHandler)
 	log.Fatal(http.ListenAndServe("localhost:8080", nil))
 }

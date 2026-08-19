@@ -1,21 +1,21 @@
 package main
 
-import ( //пакеты для работы с бд энкодерами и сетью
+import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
 	"time"
 )
 
-type AddProductRequest struct { //структра которая принимает баркод из json
+type AddProductRequest struct {
 	Barcode string `json:"barcode"`
 }
-type AddProductResponse struct { //структура которая принимает id и продукты
+type AddProductResponse struct {
 	ID      int64   `json:"id"`
 	Product Product `json:"product"`
 }
 
-type App struct { //структура которая держит ссылку на БД?
+type App struct {
 	db *sql.DB
 }
 type AddStockRequest struct {
@@ -28,7 +28,7 @@ type AddStockResponse struct {
 	Stock StockEntry `json:"stock"`
 }
 
-func (a *App) addProductHandler(w http.ResponseWriter, r *http.Request) { //метод который работает с БД и отдает запросы к
+func (a *App) addProductHandler(w http.ResponseWriter, r *http.Request) {
 	var req AddProductRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
@@ -80,4 +80,13 @@ func (a *App) addStockHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	json.NewEncoder(w).Encode(AddStockResponse{ID: id, Stock: s})
+}
+func (a *App) getStockHandler(w http.ResponseWriter, r *http.Request) {
+	stockItem, err := GetAllStock(a.db)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(w).Encode(stockItem)
 }

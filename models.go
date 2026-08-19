@@ -4,14 +4,14 @@ import (
 	"time"
 )
 
-type UnitType string //создаем универсальный тип где можем обозначить 2 варианта измерения вес и количество
+type UnitType string
 
 const (
 	UnitWeight UnitType = "weight"
 	UnitCount  UnitType = "count"
 )
 
-type Category string //создаем универсальный тип куда вмещается только категории
+type Category string
 
 const (
 	CategoryMilkAndEggs Category = "milk products and eggs"
@@ -30,7 +30,7 @@ const (
 	CategoryOther       Category = "other"
 )
 
-type Product struct { //структура 1 продукта id штрих наименование нутриенты единицы измерения и категория продукта
+type Product struct {
 	ID            int64
 	Barcode       string
 	Name          string
@@ -42,7 +42,7 @@ type Product struct { //структура 1 продукта id штрих на
 	Category      Category
 }
 
-type StockEntry struct { //тут тот же вродукт но когда внесли срок годности колличество
+type StockEntry struct {
 	ID                int64
 	ProductID         int64
 	QuantityRemaining float64
