@@ -1,20 +1,24 @@
 package main
 
-import "database/sql"
+import (
+	"encoding/json"
+	"fmt"
+	"net/http"
+)
 
-type OFFResponse struct {
+type OFFResponse struct { //создаем структуру которая содержит код статус и другую структуру
 	Code    string
 	Status  int
 	Product OFFProduct
 }
 
-type OFFProduct struct {
+type OFFProduct struct { //структура которая берет имя с json бренд и структуру нутриентов
 	ProductName string `json:"product_name"`
 	Brands      string
 	Nutriments  OFFNutriments
 }
 
-type OFFNutriments struct {
+type OFFNutriments struct { //структура содержащая энергетическую ценность и КБЖУ
 	Carbohydrates100g float64 `json:"carbohydrates_100g"`
 	Proteins100g      float64 `json:"proteins_100g"`
 	Fat100g           float64 `json:"fat_100g"`
@@ -22,11 +26,30 @@ type OFFNutriments struct {
 	EnergyKj100g      float64 `json:"energy-kj_100g"`
 }
 
-func mapToProduct(off OFFResponse, barcode string) Product {
+func GetProductByBarcode(barcode string) (OFFResponse, error) { //функция которая принимает баркоде а отдает структуру
+	url := fmt.Sprintf("https://world.openfoodfacts.org/api/v2/product/%s.json?fields=product_name,brands,nutriments,status,code", barcode) //составляем запрос
+	resp, err := http.Get(url)                                                                                                              //получаем ответ и проверяем ответ сервера на ошибку
+	if err != nil {
+		return OFFResponse{}, err
+	} // проверяем чтобы ошибки не было, в случае ошибки возвращаем пустую структуру
+	defer resp.Body.Close()                       //закрываем подключение к апи(в конце функции)
+	var off OFFResponse                           //создаем структуру offresponce под именем off
+	err = json.NewDecoder(resp.Body).Decode(&off) //декодируем структуру по ссылке на off
+	if err != nil {
+
+		return OFFResponse{}, err
+	} //проверка что удалось ли распарсить json
+	if off.Status == 0 {
+		return OFFResponse{}, fmt.Errorf("product not found: %s", barcode)
+	} //проверяем что продукт нашелся
+	return off, nil //возвращаем структуру off
+}
+
+func mapToProduct(off OFFResponse, barcode string) Product { //функция которая принимает структуру продукта и баркод а возвращает структуру продукта
 	if off.Product.Nutriments.EnergyKcal100g == 0 {
 		off.Product.Nutriments.EnergyKcal100g = off.Product.Nutriments.EnergyKj100g / 4.184
-	}
-	p := Product{
+	} //перевод джоулей в каллории
+	p := Product{ //инициализируем новый продукт
 		Barcode:       barcode,
 		Name:          off.Product.ProductName,
 		KcalPer100:    off.Product.Nutriments.EnergyKcal100g,
@@ -35,16 +58,5 @@ func mapToProduct(off OFFResponse, barcode string) Product {
 		CarbsPer100:   off.Product.Nutriments.Carbohydrates100g,
 		UnitType:      UnitWeight,
 	}
-	return p
-}
-func InsertProduct(db *sql.DB, p Product) (int64, error) {
-	var id int64
-	err := db.QueryRow(
-		"INSERT INTO products (barcode, name, kcal_per_100, protein_per_100, fat_per_100,carbs_per_100, unit_type, category ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8 ) RETURNING id",
-		p.Barcode, p.Name, p.KcalPer100, p.ProteinPer100, p.FatPer100, p.CarbsPer100, p.UnitType, p.Category,
-	).Scan(&id)
-	if err != nil {
-		return 0, err
-	}
-	return id, nil
+	return p //возвращаем его
 }

@@ -1,20 +1,17 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
-	"net/http"
 	"time"
 )
 
-type UnitType string
+type UnitType string //создаем универсальный тип где можем обозначить 2 варианта измерения вес и количество
 
 const (
 	UnitWeight UnitType = "weight"
 	UnitCount  UnitType = "count"
 )
 
-type Category string
+type Category string //создаем универсальный тип куда вмещается только категории
 
 const (
 	CategoryMilkAndEggs Category = "milk products and eggs"
@@ -33,7 +30,7 @@ const (
 	CategoryOther       Category = "other"
 )
 
-type Product struct {
+type Product struct { //структура 1 продукта id штрих наименование нутриенты единицы измерения и категория продукта
 	ID            int64
 	Barcode       string
 	Name          string
@@ -45,29 +42,10 @@ type Product struct {
 	Category      Category
 }
 
-type StockEntry struct {
+type StockEntry struct { //тут тот же вродукт но когда внесли срок годности колличество
 	ID                int64
 	ProductID         int64
 	QuantityRemaining float64
 	ExpirationDate    time.Time
 	AddedAt           time.Time
-}
-
-func GetProductByBarcode(barcode string) (OFFResponse, error) {
-	url := fmt.Sprintf("https://world.openfoodfacts.org/api/v2/product/%s.json?fields=product_name,brands,nutriments,status,code", barcode)
-	resp, err := http.Get(url)
-	if err != nil {
-		return OFFResponse{}, err
-	}
-	defer resp.Body.Close()
-	var off OFFResponse
-	err = json.NewDecoder(resp.Body).Decode(&off)
-	if err != nil {
-
-		return OFFResponse{}, err
-	}
-	if off.Status == 0 {
-		return OFFResponse{}, fmt.Errorf("product not found: %s", barcode)
-	}
-	return off, nil
 }

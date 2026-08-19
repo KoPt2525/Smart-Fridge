@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"log"
 	"net/http"
 
 	_ "github.com/lib/pq"
@@ -16,5 +17,7 @@ func main() {
 
 	app := &App{db: db}
 	http.HandleFunc("/products", app.addProductHandler)
-	http.ListenAndServe("localhost:8080", nil)
+	http.HandleFunc("/products/list", app.getProductsHandler)
+	http.HandleFunc("/stock", app.addStockHandler)
+	log.Fatal(http.ListenAndServe("localhost:8080", nil))
 }
