@@ -74,3 +74,32 @@ func GetAllStock(db *sql.DB) ([]StockItem, error) {
 	}
 	return stockItem, nil
 }
+func ConsumeStock(db *sql.DB, stockID int64, amount float64) (float64, error) {
+	var remaining float64
+	err := db.QueryRow(
+		"UPDATE stock_entries SET quantity_remaining = quantity_remaining - $1 WHERE id = $2 RETURNING quantity_remaining",
+		amount, stockID,
+	).Scan(&remaining)
+	if err != nil {
+		return 0, err
+	}
+	return remaining, nil
+}
+func SetStockQuantity(db *sql.DB, stockID int64, newQuantity float64) (float64, error) {
+	var remaining float64
+	err := db.QueryRow(
+		"UPDATE stock_entries SET quantity_remaining = $1 WHERE id = $2 RETURNING quantity_remaining",
+		newQuantity, stockID,
+	).Scan(&remaining)
+	if err != nil {
+		return 0, err
+	}
+	return remaining, nil
+}
+func MarkStockFinished(db *sql.DB, stockID int64) error {
+	_, err := db.Exec("UPDATE stock_entries SET quantity_remaining = 0 WHERE id = $1", stockID)
+	if err != nil {
+		return err
+	}
+	return nil
+}

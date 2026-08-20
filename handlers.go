@@ -28,6 +28,20 @@ type AddStockResponse struct {
 	Stock StockEntry `json:"stock"`
 }
 
+type ConsumeStockRequest struct {
+	StockID int64   `json:"stock_id"`
+	Amount  float64 `json:"amount"`
+}
+
+type SetStockRequest struct {
+	StockID     int64   `json:"stock_id"`
+	NewQuantity float64 `json:"new_quantity"`
+}
+
+type MarkFinishedRequest struct {
+	StockID int64 `json:"stock_id"`
+}
+
 func (a *App) addProductHandler(w http.ResponseWriter, r *http.Request) {
 	var req AddProductRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
@@ -89,4 +103,53 @@ func (a *App) getStockHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(stockItem)
+}
+
+func (a *App) consumeStockHandler(w http.ResponseWriter, r *http.Request) {
+	var req ConsumeStockRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	remaining, err := ConsumeStock(a.db, req.StockID, req.Amount)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(w).Encode(map[string]float64{"remaining": remaining})
+}
+func (a *App) setStockHandler(w http.ResponseWriter, r *http.Request) {
+	var req SetStockRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	remaining, err := SetStockQuantity(a.db, req.StockID, req.NewQuantity)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(w).Encode(map[string]float64{"remaining": remaining})
+}
+func (a *App) markStockHandler(w http.ResponseWriter, r *http.Request) {
+	var req MarkFinishedRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err = MarkStockFinished(a.db, req.StockID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }
