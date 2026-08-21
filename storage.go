@@ -103,3 +103,25 @@ func MarkStockFinished(db *sql.DB, stockID int64) error {
 	}
 	return nil
 }
+func GetExpiringStock(db *sql.DB, days int) ([]StockItem, error) {
+
+	rows, err := db.Query("SELECT stock_entries.id, products.name, stock_entries.quantity_remaining, stock_entries.expiration_date\nFROM stock_entries\nJOIN products ON stock_entries.product_id = products.id\nWHERE stock_entries.expiration_date <= CURRENT_DATE + $1 * INTERVAL '1 day'",
+		days,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var stockItem []StockItem
+
+	for rows.Next() {
+		var s StockItem
+		err := rows.Scan(&s.StockID, &s.ProductName, &s.QuantityRemaining, &s.ExpirationDate)
+		if err != nil {
+			return nil, err
+		}
+		stockItem = append(stockItem, s)
+	}
+	return stockItem, nil
+}

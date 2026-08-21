@@ -23,5 +23,6 @@ func main() {
 	http.HandleFunc("/stock/consume", app.consumeStockHandler)
 	http.HandleFunc("/stock/set", app.setStockHandler)
 	http.HandleFunc("/stock/finish", app.markStockHandler)
+	http.HandleFunc("/stock/expiring", app.expiringStockHandler)
 	log.Fatal(http.ListenAndServe("localhost:8080", nil))
 }

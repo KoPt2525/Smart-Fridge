@@ -153,3 +153,11 @@ func (a *App) markStockHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 }
+func (a *App) expiringStockHandler(w http.ResponseWriter, r *http.Request) {
+	items, err := GetExpiringStock(a.db, 10)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	json.NewEncoder(w).Encode(items)
+}
